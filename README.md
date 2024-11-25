@@ -6,7 +6,7 @@
 4. main.cpp는 소스파일에,
 Collision_Detection.h, Mouse_And_Keyboard_Input.h, Draw_Maze.h, stb_image.h는 헤더파일에 넣어준다.
 6. 이미지 에셋은 소스코드와 같은 프로젝트 폴더에 넣어준다.
-7. 코드실행은 main.cpp를 해준다.
+7. main.cpp 를 실행해준다.
 
 *주의: 컴퓨터 그래픽스 과제와 동일한 glut 작업환경에서만 실행 가능하다.
        CapsLock 이 켜져있으면 키보드 Input 이 작동하지 않는다.
