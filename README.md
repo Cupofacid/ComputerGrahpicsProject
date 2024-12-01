@@ -1,5 +1,5 @@
 # ComputerGrahpicsProject
-실행하는법
+Maze 실행하는법
 1. 모든파일을 다운로드한다
 2. VisualStudio 컴퓨터 그래픽스 OpenGL 작업환경 세팅을 해준다.
 3. glut 작업환경이 갖춰진 VisualStudio 프로젝트에 파일을 넣어준다.
