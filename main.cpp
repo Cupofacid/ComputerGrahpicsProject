@@ -4,23 +4,37 @@
 #include "Draw_Maze.h"
 
 void initOpenGL() {
-    glEnable(GL_DEPTH_TEST); // ±íÀÌ Å×½ºÆ® È°¼ºÈ­
+    glEnable(GL_DEPTH_TEST); // ê¹Šì´ í…ŒìŠ¤íŠ¸ í™œì„±í™”
     glEnable(GL_TEXTURE_2D);
-    glDisable(GL_CULL_FACE);  // ¹éÆäÀÌ½º ÄÃ¸µ ºñÈ°¼ºÈ­
+    glDisable(GL_CULL_FACE);  // ë°±í˜ì´ìŠ¤ ì»¬ë§ ë¹„í™œì„±í™”
 
-    wallTexture = loadTexture("WallTexture01.jpg");  // »ç¿ëÇÒ ÅØ½ºÃ³ ÆÄÀÏ °æ·Î
-    floorTexture = loadTexture("WallTexture01.jpg");  // »ç¿ëÇÒ ÅØ½ºÃ³ ÆÄÀÏ °æ·Î
+    wallTexture = loadTexture("WallTexture01.jpg");  // ì‚¬ìš©í•  í…ìŠ¤ì²˜ íŒŒì¼ ê²½ë¡œ
+    floorTexture = loadTexture("WallTexture01.jpg");  // ì‚¬ìš©í•  í…ìŠ¤ì²˜ íŒŒì¼ ê²½ë¡œ
     glMatrixMode(GL_PROJECTION);
-    gluPerspective(45.0, 1.0, 0.1, 100.0);
+    gluPerspective(45.0, 1.0, 0.1, 100.0);  // ì´ˆê¸° ë¹„ìœ¨ì„ 1.0ìœ¼ë¡œ ì„¤ì •
     glMatrixMode(GL_MODELVIEW);
 
-    setupLighting(); // Á¶¸í ¼³Á¤ È£Ãâ
+    setupLighting(); // ì¡°ëª… ì„¤ì • í˜¸ì¶œ
 
-    // ¹Ì·Î º® Äİ¶óÀÌ´õ »ı¼º
+    // ë¯¸ë¡œ ë²½ ì½œë¼ì´ë” ìƒì„±
     createColliders(maze, wallSize);
 
-    // ¸¶¿ì½º¸¦ È­¸é Áß¾ÓÀ¸·Î ÀÌµ¿
+    // ë§ˆìš°ìŠ¤ë¥¼ í™”ë©´ ì¤‘ì•™ìœ¼ë¡œ ì´ë™
     glutWarpPointer(centerX, centerY);
+}
+
+void reshape(int width, int height) {
+    // í™”ë©´ì˜ ë¹„ìœ¨ì´ ë³€í•˜ì§€ ì•Šë„ë¡ ì„¤ì •
+    glViewport(0, 0, width, height);  // ìœˆë„ìš° í¬ê¸° ì„¤ì •
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    // ìƒˆë¡œìš´ ë¹„ìœ¨ì— ë§ëŠ” íˆ¬ì˜ ì„¤ì •
+    GLfloat aspect = (GLfloat)width / (GLfloat)height;
+    gluPerspective(45.0, aspect, 0.1, 100.0);
+
+    glMatrixMode(GL_MODELVIEW);
 }
 
 int main(int argc, char** argv) {
@@ -35,8 +49,9 @@ int main(int argc, char** argv) {
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
     glutKeyboardUpFunc(keyboardUp);
-    glutPassiveMotionFunc(mouseMotion); // ¸¶¿ì½º ¿òÁ÷ÀÓ Ã³¸® µî·Ï
-    glutIdleFunc(moveCameraAndPlayer);  // ºÎµå·¯¿î ÀÌµ¿ Ã³¸®
+    glutPassiveMotionFunc(mouseMotion); // ë§ˆìš°ìŠ¤ ì›€ì§ì„ ì²˜ë¦¬ ë“±ë¡
+    glutIdleFunc(moveCameraAndPlayer);  // ë¶€ë“œëŸ¬ìš´ ì´ë™ ì²˜ë¦¬
+    glutReshapeFunc(reshape);  // ìœˆë„ìš° í¬ê¸° ì¡°ì • ì‹œ í˜¸ì¶œë  í•¨ìˆ˜ ë“±ë¡
 
     glutMainLoop();
     return 0;
