@@ -5,9 +5,9 @@
 #include <cmath>
 #include "stb_image.h"
 
-// ¹Ì·Î µ¥ÀÌÅÍ: 1Àº º®, 0Àº Åë·Î
+// ë¯¸ë¡œ ë°ì´í„°: 1ì€ ë²½, 0ì€ í†µë¡œ
 std::vector<std::vector<int>> maze = {
-    // 32X32 Å©±â ¹Ì·Î
+    // 32X32 í¬ê¸° ë¯¸ë¡œ
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     {1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1},
     {1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1},
@@ -36,22 +36,22 @@ std::vector<std::vector<int>> maze = {
 
 };
 
-const float wallSize = 1.0f; // ¹Ì·Î Å©±â
+const float wallSize = 1.0f; // ë¯¸ë¡œ í¬ê¸°
 
-// È­¸é Áß½É ÁÂÇ¥
+// í™”ë©´ ì¤‘ì‹¬ ì¢Œí‘œ
 int windowWidth = 1000, windowHeight = 800;
 int centerX = windowWidth / 2;
 int centerY = windowHeight / 2;
 
-float cameraX = 1.0f, cameraY = 0.5f, cameraZ = 1.0f; // Ä«¸Ş¶ó À§Ä¡
-float playerX = 1.0f, playerY = 0.5f, playerZ = 1.0f; // ÇÃ·¹ÀÌ¾î ¹°Ã¼ À§Ä¡
+float cameraX = 1.0f, cameraY = 0.5f, cameraZ = 1.0f; // ì¹´ë©”ë¼ ìœ„ì¹˜
+float playerX = 1.0f, playerY = 0.5f, playerZ = 1.0f; // í”Œë ˆì´ì–´ ë¬¼ì²´ ìœ„ì¹˜
 
-float yaw = 0.0f, pitch = 0.0f; // Ä«¸Ş¶ó È¸Àü (yaw: ÁÂ¿ì, pitch: »óÇÏ)
+float yaw = 0.0f, pitch = 0.0f; // ì¹´ë©”ë¼ íšŒì „ (yaw: ì¢Œìš°, pitch: ìƒí•˜)
 
-GLuint wallTexture; // º® ÅØ½ºÃ³ º¯¼ö
-GLuint floorTexture; // ¹Ù´Ú ÅØ½ºÃ³ º¯¼ö
+GLuint wallTexture; // ë²½ í…ìŠ¤ì²˜ ë³€ìˆ˜
+GLuint floorTexture; // ë°”ë‹¥ í…ìŠ¤ì²˜ ë³€ìˆ˜
 
-// ÅØ½ºÃ³¸¦ ·Îµå ÇÔ¼ö
+// í…ìŠ¤ì²˜ë¥¼ ë¡œë“œ í•¨ìˆ˜
 GLuint loadTexture(const char* filename) {
     int width, height, channels;
     unsigned char* data = stbi_load(filename, &width, &height, &channels, 0);
@@ -69,42 +69,42 @@ GLuint loadTexture(const char* filename) {
     return texture;
 }
 
-// ¹Ì·Î º® ±×¸®±â ÇÔ¼ö (ÅØ½ºÃ³ Àû¿ë)
+// ë¯¸ë¡œ ë²½ ê·¸ë¦¬ê¸° í•¨ìˆ˜ (í…ìŠ¤ì²˜ ì ìš©)
 void drawWall() {
     glBindTexture(GL_TEXTURE_2D, wallTexture);
     glBegin(GL_QUADS);
 
-    // ¾Õ¸é
+    // ì•ë©´
     glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
     glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
     glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
     glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
 
-    // µŞ¸é
+    // ë’·ë©´
     glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
     glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
     glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
     glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
 
-    // ¿ŞÂÊ ¸é
+    // ì™¼ìª½ ë©´
     glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
     glTexCoord2f(1.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.5f);
     glTexCoord2f(1.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
     glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
 
-    // ¿À¸¥ÂÊ ¸é
+    // ì˜¤ë¥¸ìª½ ë©´
     glTexCoord2f(0.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
     glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, 0.5f);
     glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
     glTexCoord2f(0.0f, 1.0f); glVertex3f(0.5f, 0.5f, -0.5f);
 
-    // À§ÂÊ ¸é
+    // ìœ„ìª½ ë©´
     glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, 0.5f, -0.5f);
     glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, 0.5f, -0.5f);
     glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.5f, 0.5f);
     glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.5f, 0.5f);
 
-    // ¾Æ·¡ÂÊ ¸é
+    // ì•„ë˜ìª½ ë©´
     glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, -0.5f);
     glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, -0.5f, -0.5f);
     glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, -0.5f, 0.5f);
@@ -113,42 +113,42 @@ void drawWall() {
     glEnd();
 }
 
-// ¹Ì·Î ¹Ù´Ú ±×¸®±â ÇÔ¼ö
+// ë¯¸ë¡œ ë°”ë‹¥ ê·¸ë¦¬ê¸° í•¨ìˆ˜
 void drawFloor() {
     glBindTexture(GL_TEXTURE_2D, floorTexture);
     glBegin(GL_QUADS);
 
-    // ¹Ù´Ú Å¸ÀÏ ¸é¿¡ ÅØ½ºÃ³ ¸ÅÇÎ
-    glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, 0.0f, -0.5f);  // ¿ŞÂÊ ÇÏ´Ü
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, 0.0f, -0.5f);   // ¿À¸¥ÂÊ ÇÏ´Ü
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.0f, 0.5f);    // ¿À¸¥ÂÊ »ó´Ü
-    glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.0f, 0.5f);   // ¿ŞÂÊ »ó´Ü
+    // ë°”ë‹¥ íƒ€ì¼ ë©´ì— í…ìŠ¤ì²˜ ë§¤í•‘
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, 0.0f, -0.5f);  // ì™¼ìª½ í•˜ë‹¨
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5f, 0.0f, -0.5f);   // ì˜¤ë¥¸ìª½ í•˜ë‹¨
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5f, 0.0f, 0.5f);    // ì˜¤ë¥¸ìª½ ìƒë‹¨
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f, 0.0f, 0.5f);   // ì™¼ìª½ ìƒë‹¨
    
     glEnd();
 }
 
-// È­¸é ±×¸®±â
+// í™”ë©´ ê·¸ë¦¬ê¸°
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.5f, 0.8f, 1.0f, 1);
     glLoadIdentity();
 
-    // Ä«¸Ş¶ó ¹æÇâ °è»ê
+    // ì¹´ë©”ë¼ ë°©í–¥ ê³„ì‚°
     float dirX = cos(pitch) * cos(yaw);
     float dirY = sin(pitch);
     float dirZ = cos(pitch) * sin(yaw);
 
-    // Ä«¸Ş¶ó À§Ä¡ ¼³Á¤
-    gluLookAt(cameraX, cameraY, cameraZ,           // Ä«¸Ş¶ó À§Ä¡
-        cameraX + dirX, cameraY + dirY, cameraZ + dirZ, // ¹Ù¶óº¸´Â Á¡
-        0.0f, 1.0f, 0.0f);                  // ¾÷ º¤ÅÍ
+    // ì¹´ë©”ë¼ ìœ„ì¹˜ ì„¤ì •
+    gluLookAt(cameraX, cameraY, cameraZ,           // ì¹´ë©”ë¼ ìœ„ì¹˜
+        cameraX + dirX, cameraY + dirY, cameraZ + dirZ, // ë°”ë¼ë³´ëŠ” ì 
+        0.0f, 1.0f, 0.0f);                  // ì—… ë²¡í„°
 
-    // ¹Ì·Î ±×¸®±â
+    // ë¯¸ë¡œ ê·¸ë¦¬ê¸°
     for (int i = 0; i < maze.size(); ++i) {
         for (int j = 0; j < maze[i].size(); ++j) {
-            // Å¸ÀÏÀÌ ±×·ÁÁö´Â À§Ä¡·Î ÀÌµ¿
+            // íƒ€ì¼ì´ ê·¸ë ¤ì§€ëŠ” ìœ„ì¹˜ë¡œ ì´ë™
             glPushMatrix();
-            glTranslatef(j * 1.0f, 0.0f, i * 1.0f);  // 1.0f Å©±â Å¸ÀÏ
+            glTranslatef(j * 1.0f, 0.0f, i * 1.0f);  // 1.0f í¬ê¸° íƒ€ì¼
             drawFloor();
             glPopMatrix();
             if (maze[i][j] == 1) {
@@ -161,48 +161,48 @@ void display() {
         }
     }
 
-    // ¹Ì·Î Å©±â¸¸Å­ ¹Ù´Ú Å¸ÀÏÀ» ±×¸®±â
+    // ë¯¸ë¡œ í¬ê¸°ë§Œí¼ ë°”ë‹¥ íƒ€ì¼ì„ ê·¸ë¦¬ê¸°
     //for (int i = 0; i < maze.size(); ++i) {
     //    for (int j = 0; j < maze[i].size(); ++j) {
-    //        // Å¸ÀÏÀÌ ±×·ÁÁö´Â À§Ä¡·Î ÀÌµ¿
+    //        // íƒ€ì¼ì´ ê·¸ë ¤ì§€ëŠ” ìœ„ì¹˜ë¡œ ì´ë™
     //        glPushMatrix();
-    //        glTranslatef(j * 1.0f, 0.0f, i * 1.0f);  // 1.0f Å©±â Å¸ÀÏ
+    //        glTranslatef(j * 1.0f, 0.0f, i * 1.0f);  // 1.0f í¬ê¸° íƒ€ì¼
     //        drawFloor();
     //        glPopMatrix();
     //    }
     //}
 
-    // ÇÃ·¹ÀÌ¾î ¹°Ã¼ ±×¸®±â
+    // í”Œë ˆì´ì–´ ë¬¼ì²´ ê·¸ë¦¬ê¸°
     //glPushMatrix();
     //glTranslatef(playerX, playerY, playerZ);
-    //glutSolidSphere(playerRadius, 20, 20); // ¹°Ã¼¸¦ ±¸Ã¼·Î ±×¸®±â
+    //glutSolidSphere(playerRadius, 20, 20); // ë¬¼ì²´ë¥¼ êµ¬ì²´ë¡œ ê·¸ë¦¬ê¸°
     //glPopMatrix();
 
     glutSwapBuffers();
 }
 
-// Á¶¸í ¼³Á¤
+// ì¡°ëª… ì„¤ì •
 void setupLighting() {
-    glEnable(GL_LIGHTING); // Á¶¸í È°¼ºÈ­
-    glEnable(GL_LIGHT0);   // ±âº» Á¶¸í(Light 0) È°¼ºÈ­
+    glEnable(GL_LIGHTING); // ì¡°ëª… í™œì„±í™”
+    glEnable(GL_LIGHT0);   // ê¸°ë³¸ ì¡°ëª…(Light 0) í™œì„±í™”
     glDisable(GL_LIGHTING);
 
-    // Á¶¸í »ö»ó ¼³Á¤
-    GLfloat lightPos[] = { 2.0f, 4.0f, 2.0f, 1.0f };  // Á¶¸í À§Ä¡
-    GLfloat lightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f }; // ÁÖº¯±¤
-    GLfloat lightDiffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f }; // ³­¹İ»ç±¤
-    GLfloat lightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f }; // ¹İ»ç±¤
+    // ì¡°ëª… ìƒ‰ìƒ ì„¤ì •
+    GLfloat lightPos[] = { 2.0f, 4.0f, 2.0f, 1.0f };  // ì¡°ëª… ìœ„ì¹˜
+    GLfloat lightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f }; // ì£¼ë³€ê´‘
+    GLfloat lightDiffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f }; // ë‚œë°˜ì‚¬ê´‘
+    GLfloat lightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f }; // ë°˜ì‚¬ê´‘
 
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
     glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
     glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
 
-    // ÀçÁú ¼³Á¤
+    // ì¬ì§ˆ ì„¤ì •
     GLfloat matAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
     GLfloat matDiffuse[] = { 0.6f, 0.6f, 0.6f, 1.0f };
     GLfloat matSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    GLfloat matShininess[] = { 50.0f }; // ¹İ»ç °­µµ
+    GLfloat matShininess[] = { 50.0f }; // ë°˜ì‚¬ ê°•ë„
 
     glMaterialfv(GL_FRONT, GL_AMBIENT, matAmbient);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, matDiffuse);
