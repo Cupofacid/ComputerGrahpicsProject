@@ -5,16 +5,16 @@
 #include "Mouse_And_Keyboard_Input.h"
 #include "Draw_Maze.h"
 
-const float playerRadius = 0.1f;  // ÇÃ·¹ÀÌ¾îÀÇ ¹İÁö¸§ (Á¶Á¤ °¡´É)
+const float playerRadius = 0.15f;  // í”Œë ˆì´ì–´ì˜ ë°˜ì§€ë¦„ (ì¡°ì • ê°€ëŠ¥)
 
-// Collider ±¸Á¶Ã¼
+// Collider êµ¬ì¡°ì²´
 struct Collider {
-    float x, y, z;  // º®ÀÇ Áß½É ÁÂÇ¥
-    float size;     // º®ÀÇ Å©±â (Á¤À°¸éÃ¼)
+    float x, y, z;  // ë²½ì˜ ì¤‘ì‹¬ ì¢Œí‘œ
+    float size;     // ë²½ì˜ í¬ê¸° (ì •ìœ¡ë©´ì²´)
 
-    // Ãæµ¹ °Ë»ç ÇÔ¼ö
+    // ì¶©ëŒ ê²€ì‚¬ í•¨ìˆ˜
     bool checkCollision(float px, float py, float pz, float radius) {
-        // º®ÀÇ Å©±â¿Í ÇÃ·¹ÀÌ¾î ¹İÁö¸§À» °í·ÁÇÑ AABB Ãæµ¹ °Ë»ç
+        // ë²½ì˜ í¬ê¸°ì™€ í”Œë ˆì´ì–´ ë°˜ì§€ë¦„ì„ ê³ ë ¤í•œ AABB ì¶©ëŒ ê²€ì‚¬
         bool collisionX = px + radius > x - size / 2 && px - radius < x + size / 2;
         bool collisionY = py + radius > y - size / 2 && py - radius < y + size / 2;
         bool collisionZ = pz + radius > z - size / 2 && pz - radius < z + size / 2;
@@ -23,31 +23,31 @@ struct Collider {
     }
 };
 
-// º®µéÀÇ Äİ¶óÀÌ´õ ¸®½ºÆ®
+// ë²½ë“¤ì˜ ì½œë¼ì´ë” ë¦¬ìŠ¤íŠ¸
 std::vector<Collider> colliders;
 
 bool isPlayerColliding(float newX, float newZ, float playerRadius) {
-    // ÇÃ·¹ÀÌ¾îÀÇ yÁÂÇ¥´Â °íÁ¤µÇ¾î ÀÖÀ¸¹Ç·Î x, z¸¸ ºñ±³
+    // í”Œë ˆì´ì–´ì˜ yì¢Œí‘œëŠ” ê³ ì •ë˜ì–´ ìˆìœ¼ë¯€ë¡œ x, zë§Œ ë¹„êµ
     for (const auto& collider : colliders) {
-        // º®ÀÇ Å©±â¿Í ÇÃ·¹ÀÌ¾îÀÇ ¹İÁö¸§À» °í·ÁÇÑ AABB Ãæµ¹ °Ë»ç
+        // ë²½ì˜ í¬ê¸°ì™€ í”Œë ˆì´ì–´ì˜ ë°˜ì§€ë¦„ì„ ê³ ë ¤í•œ AABB ì¶©ëŒ ê²€ì‚¬
         bool collisionX = newX + playerRadius > collider.x - collider.size / 2 && newX - playerRadius < collider.x + collider.size / 2;
         bool collisionZ = newZ + playerRadius > collider.z - collider.size / 2 && newZ - playerRadius < collider.z + collider.size / 2;
 
-        // x¿Í z ÁÂÇ¥°¡ ¸ğµÎ Ãæµ¹ ¹üÀ§ ¾È¿¡ ÀÖÀ¸¸é Ãæµ¹
+        // xì™€ z ì¢Œí‘œê°€ ëª¨ë‘ ì¶©ëŒ ë²”ìœ„ ì•ˆì— ìˆìœ¼ë©´ ì¶©ëŒ
         if (collisionX && collisionZ) {
-            return true; // Ãæµ¹ÀÌ ¹ß»ıÇÏ¸é true ¹İÈ¯
+            return true; // ì¶©ëŒì´ ë°œìƒí•˜ë©´ true ë°˜í™˜
         }
     }
-    return false; // Ãæµ¹ÀÌ ¾øÀ¸¸é false ¹İÈ¯
+    return false; // ì¶©ëŒì´ ì—†ìœ¼ë©´ false ë°˜í™˜
 }
 
-// ¹Ì·Î¿¡ º®ÀÇ Äİ¶óÀÌ´õ¸¦ Ãß°¡
+// ë¯¸ë¡œì— ë²½ì˜ ì½œë¼ì´ë”ë¥¼ ì¶”ê°€
 void createColliders(std::vector<std::vector<int>> maze, float wallSize) {
     colliders.clear();
     for (int i = 0; i < maze.size(); ++i) {
         for (int j = 0; j < maze[i].size(); ++j) {
-            if (maze[i][j] == 1) { // º®ÀÌ¸é
-                // º®ÀÇ Áß¾Ó ÁÂÇ¥¿Í Å©±â¸¦ ¼³Á¤
+            if (maze[i][j] == 1) { // ë²½ì´ë©´
+                // ë²½ì˜ ì¤‘ì•™ ì¢Œí‘œì™€ í¬ê¸°ë¥¼ ì„¤ì •
                 float x = j * wallSize;
                 float z = i * wallSize;
                 colliders.push_back(Collider{ x, wallSize / 2, z, wallSize });
@@ -57,29 +57,29 @@ void createColliders(std::vector<std::vector<int>> maze, float wallSize) {
 }
 
 void moveCameraAndPlayer() {
-    const float moveSpeed = 0.05f; // ÀÌµ¿ ¼Óµµ ¼³Á¤
-    const float rotationSpeed = 0.05f;  // È¸Àü ¼Óµµ ¼³Á¤
+    const float moveSpeed = 0.05f; // ì´ë™ ì†ë„ ì„¤ì •
+    const float rotationSpeed = 0.05f;  // íšŒì „ ì†ë„ ì„¤ì •
 
-    // Ä«¸Ş¶ó ¹æÇâ º¤ÅÍ °è»ê
+    // ì¹´ë©”ë¼ ë°©í–¥ ë²¡í„° ê³„ì‚°
     float forwardX = cos(pitch) * cos(yaw);
     float forwardZ = cos(pitch) * sin(yaw);
     float rightX = sin(yaw);
     float rightZ = -cos(yaw);
 
-    // ¿¹»ó À§Ä¡ °è»ê
+    // ì˜ˆìƒ ìœ„ì¹˜ ê³„ì‚°
     float newCameraX = cameraX;
     float newCameraZ = cameraZ;
     float newPlayerX = playerX;
     float newPlayerZ = playerZ;
 
-    // ÀüÁø
+    // ì „ì§„
     if (keyStates['w']) {
         newCameraX = cameraX + moveSpeed * forwardX;
         newCameraZ = cameraZ + moveSpeed * forwardZ;
         newPlayerX = playerX + moveSpeed * forwardX;
         newPlayerZ = playerZ + moveSpeed * forwardZ;
 
-        // Ãæµ¹ÀÌ ¾øÀ¸¸é ÀÌµ¿
+        // ì¶©ëŒì´ ì—†ìœ¼ë©´ ì´ë™
         if (!isPlayerColliding(newPlayerX, newPlayerZ, playerRadius)) {
             cameraX = newCameraX;
             cameraZ = newCameraZ;
@@ -88,14 +88,14 @@ void moveCameraAndPlayer() {
         }
     }
 
-    // ÈÄÁø
+    // í›„ì§„
     if (keyStates['s']) {
         newCameraX = cameraX - moveSpeed * forwardX;
         newCameraZ = cameraZ - moveSpeed * forwardZ;
         newPlayerX = playerX - moveSpeed * forwardX;
         newPlayerZ = playerZ - moveSpeed * forwardZ;
 
-        // Ãæµ¹ÀÌ ¾øÀ¸¸é ÀÌµ¿
+        // ì¶©ëŒì´ ì—†ìœ¼ë©´ ì´ë™
         if (!isPlayerColliding(newPlayerX, newPlayerZ, playerRadius)) {
             cameraX = newCameraX;
             cameraZ = newCameraZ;
@@ -104,14 +104,14 @@ void moveCameraAndPlayer() {
         }
     }
 
-    // ¿À¸¥ÂÊ ÀÌµ¿
+    // ì˜¤ë¥¸ìª½ ì´ë™
     if (keyStates['a']) {
         newCameraX = cameraX + moveSpeed * rightX;
         newCameraZ = cameraZ + moveSpeed * rightZ;
         newPlayerX = playerX + moveSpeed * rightX;
         newPlayerZ = playerZ + moveSpeed * rightZ;
 
-        // Ãæµ¹ÀÌ ¾øÀ¸¸é ÀÌµ¿
+        // ì¶©ëŒì´ ì—†ìœ¼ë©´ ì´ë™
         if (!isPlayerColliding(newPlayerX, newPlayerZ, playerRadius)) {
             cameraX = newCameraX;
             cameraZ = newCameraZ;
@@ -120,14 +120,14 @@ void moveCameraAndPlayer() {
         }
     }
 
-    // ¿ŞÂÊ ÀÌµ¿
+    // ì™¼ìª½ ì´ë™
     if (keyStates['d']) {
         newCameraX = cameraX - moveSpeed * rightX;
         newCameraZ = cameraZ - moveSpeed * rightZ;
         newPlayerX = playerX - moveSpeed * rightX;
         newPlayerZ = playerZ - moveSpeed * rightZ;
 
-        // Ãæµ¹ÀÌ ¾øÀ¸¸é ÀÌµ¿
+        // ì¶©ëŒì´ ì—†ìœ¼ë©´ ì´ë™
         if (!isPlayerColliding(newPlayerX, newPlayerZ, playerRadius)) {
             cameraX = newCameraX;
             cameraZ = newCameraZ;
@@ -136,17 +136,17 @@ void moveCameraAndPlayer() {
         }
     }
 
-    // 'q' Å°¸¦ ´­·¶À» ¶§ ¿ŞÂÊ È¸Àü
+    // 'q' í‚¤ë¥¼ ëˆŒë €ì„ ë•Œ ì™¼ìª½ íšŒì „
     if (keyStates['q']) {
-        yaw -= rotationSpeed;  // ¿ŞÂÊÀ¸·Î È¸Àü
+        yaw -= rotationSpeed;  // ì™¼ìª½ìœ¼ë¡œ íšŒì „
     }
 
-    // 'e' Å°¸¦ ´­·¶À» ¶§ ¿À¸¥ÂÊ È¸Àü
+    // 'e' í‚¤ë¥¼ ëˆŒë €ì„ ë•Œ ì˜¤ë¥¸ìª½ íšŒì „
     if (keyStates['e']) {
-        yaw += rotationSpeed;  // ¿À¸¥ÂÊÀ¸·Î È¸Àü
+        yaw += rotationSpeed;  // ì˜¤ë¥¸ìª½ìœ¼ë¡œ íšŒì „
     }
 
-    glutPostRedisplay(); // È­¸é °»½Å
+    glutPostRedisplay(); // í™”ë©´ ê°±ì‹ 
 }
 
 
