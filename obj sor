@@ -205,8 +205,11 @@ void keyboardFunc(unsigned char key, int x, int y) {
     }
     else if (key == 's') {  // 's' 키를 눌러서 메쉬를 저장
         if (isMeshGenerated) {
-            std::cout << "메쉬를 저장하는 중...\n";
-            saveMeshToOBJ("mesh.obj");
+            std::cout << "저장할 이름을 입력하시오: ";
+            std::string filename;
+            std::cin >> filename;
+            filename += ".obj";
+            saveMeshToOBJ(filename);
         }
     }
     else if (key == 27) { // ESC 키로 종료
