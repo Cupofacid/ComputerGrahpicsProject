@@ -1,0 +1,250 @@
+#include <iostream>
+#include <GL/freeglut.h>
+#include <vector>
+#include <cmath>
+#include <fstream>  // 파일 출력을 위한 헤더
+using namespace std;
+
+std::vector<float> points;                      // 사용자 입력 점들
+std::vector<std::vector<float>> meshVertices;   // 생성된 SOR 메쉬 정점
+bool isMeshGenerated = false;                   // 메쉬 생성 상태 확인
+bool wireframeMode = true;                      // 와이어프레임 모드 활성화
+
+// 화면 크기
+int windowWidth = 1000, windowHeight = 900;
+
+// SOR 회전 분할 수 (사용자 입력에 따라 동적으로 결정)
+int SOR_SEGMENTS = 36; // 기본값은 36
+
+// π 값 정의
+const float PI = 3.14159265358979323846f;
+
+// 360의 약수인지 확인하는 함수
+bool isDivisorOf360(int num) {
+    return (360 % num == 0);
+}
+
+// 마우스 좌표 정규화 함수
+void normalizeMouseCoords(int x, int y, float& normX, float& normY) {
+    normX = (2.0f * x / windowWidth) - 1.0f;
+    normY = 1.0f - (2.0f * y / windowHeight);
+}
+
+// y축을 화면에 그리기
+void drawYAxis() {
+    glColor3f(0.0, 0.0, 0.0); // 검은색
+    glBegin(GL_LINES);
+    glVertex3f(0.0f, -1.0f, 0.0f);
+    glVertex3f(0.0f, 1.0f, 0.0f);
+    glEnd();
+}
+
+// 입력된 점들만 표시
+void drawPointsOnly() {
+    glPointSize(3.0f);
+    glColor3f(0.0, 0.0, 0.0); // 검은색
+    glBegin(GL_POINTS);
+    for (size_t i = 0; i < points.size(); i += 2) {
+        glVertex3f(points[i], points[i + 1], 0.0f);
+    }
+    glEnd();
+}
+
+// SOR 메쉬 생성
+void generateSOR() {
+    meshVertices.clear();
+    if (points.size() < 4) {
+        std::cerr << "Error: 최소한 두 개 이상의 점이 필요합니다.\n";
+        isMeshGenerated = false;
+        return;
+    }
+
+    // SOR 메쉬 정점 생성
+    for (int i = 0; i < SOR_SEGMENTS; ++i) {
+        float angle = (2.0f * PI * i) / SOR_SEGMENTS;
+        float cosTheta = cos(angle);
+        float sinTheta = sin(angle);
+
+        for (size_t j = 0; j < points.size(); j += 2) {
+            float x = points[j];
+            float y = points[j + 1];
+
+            float rotatedX = cosTheta * x;
+            float rotatedZ = sinTheta * x;
+
+            meshVertices.push_back({ rotatedX, y, rotatedZ });
+        }
+    }
+
+    isMeshGenerated = true;
+    std::cout << "SOR 메쉬 생성 완료. 총 정점 수: " << meshVertices.size() << "\n";
+}
+
+// SOR 메쉬 렌더링
+void drawMesh() {
+    if (!isMeshGenerated || meshVertices.empty()) {
+        return;
+    }
+
+    glPointSize(5.0f); // 점 크기 조정
+    glColor3f(0.0, 0.0, 0.0); // 검은색
+    glBegin(GL_POINTS);
+    for (const auto& vertex : meshVertices) {
+        glVertex3f(vertex[0], vertex[1], vertex[2]);
+    }
+    glEnd();
+
+    // 와이어프레임 모드로 메쉬 그리기
+    if (wireframeMode) {
+        glColor3f(0.0, 0.5, 1.0); // 파란색
+        glBegin(GL_LINES);
+
+        size_t numPoints = points.size() / 2; // 점의 개수 (x, y 쌍으로 저장되어 있음)
+
+        for (int i = 0; i < SOR_SEGMENTS; ++i) {
+            int nextSegment = (i + 1) % SOR_SEGMENTS;
+
+            for (size_t j = 0; j < numPoints - 1; ++j) {
+                const auto& v1 = meshVertices[i * numPoints + j];
+                const auto& right = meshVertices[i * numPoints + j + 1];
+                const auto& down = meshVertices[nextSegment * numPoints + j];
+                const auto& rightDown = meshVertices[nextSegment * numPoints + j + 1];
+
+                glVertex3f(v1[0], v1[1], v1[2]);
+                glVertex3f(right[0], right[1], right[2]);
+
+                glVertex3f(v1[0], v1[1], v1[2]);
+                glVertex3f(down[0], down[1], down[2]);
+
+                glVertex3f(right[0], right[1], right[2]);
+                glVertex3f(rightDown[0], rightDown[1], rightDown[2]);
+            }
+        }
+
+        glEnd();
+    }
+}
+
+// 메쉬를 OBJ 파일로 저장하는 함수
+void saveMeshToOBJ(const std::string& filename) {
+    std::ofstream outFile(filename);
+    if (!outFile) {
+        std::cerr << "파일을 열 수 없습니다: " << filename << std::endl;
+        return;
+    }
+
+    // OBJ 헤더
+    outFile << "# SOR Mesh exported as OBJ format\n";
+
+    // 정점 정보 저장
+    for (const auto& vertex : meshVertices) {
+        outFile << "v " << vertex[0] << " " << vertex[1] << " " << vertex[2] << "\n";
+    }
+
+    // 폴리곤(face) 정보 저장
+    size_t numPoints = points.size() / 2; // 입력 점 개수
+    for (int i = 0; i < SOR_SEGMENTS; ++i) {
+        int nextSegment = (i + 1) % SOR_SEGMENTS;
+
+        for (size_t j = 0; j < numPoints - 1; ++j) {
+            int idx1 = i * numPoints + j + 1; // OBJ 인덱스는 1부터 시작
+            int idx2 = idx1 + 1;
+            int idx3 = nextSegment * numPoints + j + 1;
+            int idx4 = idx3 + 1;
+
+            outFile << "f " << idx1 << " " << idx2 << " " << idx3 << "\n";
+            outFile << "f " << idx2 << " " << idx4 << " " << idx3 << "\n";
+        }
+    }
+
+    outFile.close();
+    std::cout << "메쉬가 " << filename << "에 저장되었습니다.\n";
+}
+
+// 화면 갱신
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    drawYAxis(); // y축 그리기
+    drawPointsOnly(); // 점들만 표시
+    drawMesh();
+    glutSwapBuffers();
+}
+
+// 마우스 클릭 이벤트
+void mouseFunc(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+        float normX, normY;
+        normalizeMouseCoords(x, y, normX, normY);
+
+        points.push_back(normX); // X 좌표
+        points.push_back(normY); // Y 좌표
+
+        std::cout << "점 추가됨: (" << normX << ", " << normY << ")\n";
+        glutPostRedisplay();
+    }
+}
+
+// 키보드 이벤트
+void keyboardFunc(unsigned char key, int x, int y) {
+    if (key == '\r' || key == '\n') {  // 엔터키가 눌리면
+        generateSOR(); // SOR 메쉬 생성
+        glutPostRedisplay();
+    }
+    else if (key == 'w') {
+        wireframeMode = !wireframeMode; // 와이어프레임 <-> 점 모드 전환
+        glutPostRedisplay();
+    }
+    else if (key == 's') {  // 's' 키를 눌러서 메쉬를 저장
+        if (isMeshGenerated) {
+            std::cout << "메쉬를 저장하는 중...\n";
+            saveMeshToOBJ("mesh.obj");
+        }
+    }
+    else if (key == 27) { // ESC 키로 종료
+        exit(0);
+    }
+}
+
+// 사용자 입력을 통해 SOR 회전 분할 각도 설정
+void setSORSegmentsFromUserInput() {
+    int userAngle;
+    bool validInput = false;
+
+    while (!validInput) {
+        std::cout << "회전 분할 각도를 입력하세요 (360의 약수 중 하나): ";
+        std::cin >> userAngle;
+
+        if (isDivisorOf360(userAngle)) {
+            SOR_SEGMENTS = 360 / userAngle;
+            std::cout << "SOR 회전 분할 수: " << SOR_SEGMENTS << std::endl;
+            validInput = true;
+        }
+        else {
+            std::cerr << "오류: 입력된 값은 360의 약수가 아닙니다. 다시 시도하세요.\n";
+        }
+    }
+}
+
+// OpenGL 초기화
+void init() {
+    setSORSegmentsFromUserInput(); // 사용자 입력으로 SOR 분할 수 설정
+    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glEnable(GL_DEPTH_TEST); // 깊이 테스트 활성화
+}
+
+// 메인 함수
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+    glutInitWindowSize(windowWidth, windowHeight);
+    glutCreateWindow("SOR Mesh Creator");
+
+    init();
+
+    glutDisplayFunc(display);
+    glutMouseFunc(mouseFunc);
+    glutKeyboardFunc(keyboardFunc);
+
+    glutMainLoop();
+    return 0;
+}
