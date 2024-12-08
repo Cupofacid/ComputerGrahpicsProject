@@ -97,7 +97,7 @@ void drawMesh() {
     // 와이어프레임 모드로 메쉬 그리기
     if (wireframeMode) {
         glColor3f(0.0, 0.5, 1.0); // 파란색
-        glBegin(GL_LINES);
+        glBegin(GL_LINES);        // 와이어프레임 모드
 
         size_t numPoints = points.size() / 2; // 점의 개수 (x, y 쌍으로 저장되어 있음)
 
@@ -106,9 +106,18 @@ void drawMesh() {
 
             for (size_t j = 0; j < numPoints - 1; ++j) {
                 const auto& v1 = meshVertices[i * numPoints + j];
-                const auto& right = meshVertices[i * numPoints + j + 1];
-                const auto& down = meshVertices[nextSegment * numPoints + j];
-                const auto& rightDown = meshVertices[nextSegment * numPoints + j + 1];
+                if (numPoints == 0) {
+                    continue;
+                }
+
+                size_t rightIndex = (j + 1) % numPoints;
+                const auto& right = meshVertices[i * numPoints + rightIndex];
+
+                size_t downIndex = (j + numPoints) % meshVertices.size();
+                const auto& down = meshVertices[((i + 1) % SOR_SEGMENTS) * numPoints + j];
+
+                size_t rightDownIndex = (j + 1) % numPoints;
+                const auto& rightDown = meshVertices[((i + 1) % SOR_SEGMENTS) * numPoints + rightDownIndex];
 
                 glVertex3f(v1[0], v1[1], v1[2]);
                 glVertex3f(right[0], right[1], right[2]);
@@ -116,7 +125,7 @@ void drawMesh() {
                 glVertex3f(v1[0], v1[1], v1[2]);
                 glVertex3f(down[0], down[1], down[2]);
 
-                glVertex3f(right[0], right[1], right[2]);
+                glVertex3f(v1[0], v1[1], v1[2]);
                 glVertex3f(rightDown[0], rightDown[1], rightDown[2]);
             }
         }
