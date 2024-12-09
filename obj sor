@@ -136,9 +136,10 @@ void drawMesh() {
 
 // 메쉬를 OBJ 파일로 저장하는 함수
 void saveMeshToOBJ(const std::string& filename) {
-    std::ofstream outFile(filename);
+    std::string fullPath = "D:/Meshes/" + filename; // 저장 경로를 D:/Meshes/로 설정
+    std::ofstream outFile(fullPath);
     if (!outFile) {
-        std::cerr << "파일을 열 수 없습니다: " << filename << std::endl;
+        std::cerr << "파일을 열 수 없습니다: " << fullPath << std::endl;
         return;
     }
 
@@ -167,7 +168,7 @@ void saveMeshToOBJ(const std::string& filename) {
     }
 
     outFile.close();
-    std::cout << "메쉬가 " << filename << "에 저장되었습니다.\n";
+    std::cout << "메쉬가 " << fullPath << "에 저장되었습니다.\n";
 }
 
 // 화면 갱신
