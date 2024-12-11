@@ -3,6 +3,7 @@
 #include <vector>
 #include <cmath>
 #include <fstream>  // 파일 출력을 위한 헤더
+#include <cstdlib> // system 함수 사용을 위한 헤더
 using namespace std;
 
 std::vector<float> points;                      // 사용자 입력 점들
@@ -10,15 +11,14 @@ std::vector<std::vector<float>> meshVertices;   // 생성된 SOR 메쉬 정점
 bool isMeshGenerated = false;                   // 메쉬 생성 상태 확인
 bool wireframeMode = true;                      // 와이어프레임 모드 활성화
 
-// 화면 크기
-int windowWidth = 1000, windowHeight = 900;
+int windowWidth = 1000, windowHeight = 900; // 화면 크기
 
 // SOR 회전 분할 수 (사용자 입력에 따라 동적으로 결정)
 int SOR_SEGMENTS = 36; // 기본값은 36
-const float angle = 0;
 
-// π 값 정의
-const float PI = 3.14159265358979323846f;
+const float PI = 3.14159265358979323846f; // π 값 정의
+
+char rotationAxis = 'y'; // 기본 회전 축 (y축)
 
 // 360의 약수인지 확인하는 함수
 bool isDivisorOf360(int num) {
@@ -39,6 +39,23 @@ void drawYAxis() {
     glVertex3f(0.0f, 1.0f, 0.0f);
     glEnd();
 }
+// x축을 화면에 그리기
+void drawXAxis() {
+    glColor3f(0.0, 0.0, 0.0); // 빨간색
+    glBegin(GL_LINES);
+    glVertex3f(-1.0f, 0.0f, 0.0f);
+    glVertex3f(1.0f, 0.0f, 0.0f);
+    glEnd();
+}
+
+// z축을 화면에 그리기
+void drawZAxis() {
+    glColor3f(0.0, 0.0, 0.0); // 파란색
+    glBegin(GL_LINES);
+    glVertex3f(0.0f, 0.0f, -1.0f);
+    glVertex3f(0.0f, 0.0f, 1.0f);
+    glEnd();
+}
 
 // 입력된 점들만 표시
 void drawPointsOnly() {
@@ -51,7 +68,27 @@ void drawPointsOnly() {
     glEnd();
 }
 
-// SOR 메쉬 생성
+// 화면에 텍스트 출력 함수
+void drawText(float x, float y, const std::string& text) {
+    glRasterPos2f(x, y); // 텍스트 위치 설정
+    for (char c : text) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c); // 글꼴과 문자 출력
+    }
+}
+
+// 키보드 인풋 도움말 출력
+void displayKeyboardHelp() {
+    glColor3f(0.0, 0.0, 0.0); // 텍스트 색상: 검정
+    drawText(-0.95f, 0.9f, "Keyboard Inputs");
+    drawText(-0.95f, 0.85f, "Enter : Generate SOR");
+    drawText(-0.95f, 0.8f, "x / y / z : Set rotation axis");
+    drawText(-0.95f, 0.75f, "w : Toggle wireframe");
+    drawText(-0.95f, 0.7f, "s : Save SOR to OBJ");
+    drawText(-0.95f, 0.65f, "q : Reset model");
+    drawText(-0.95f, 0.6f, "g : Run Maze file");
+    drawText(-0.95f, 0.55f, "ESC : Exit");
+}
+
 void generateSOR() {
     meshVertices.clear();
     if (points.size() < 4) {
@@ -69,16 +106,78 @@ void generateSOR() {
         for (size_t j = 0; j < points.size(); j += 2) {
             float x = points[j];
             float y = points[j + 1];
+            float rotatedX = x, rotatedY = y, rotatedZ = 0.0f;
 
-            float rotatedX = cosTheta * x;
-            float rotatedZ = sinTheta * x;
+            // 선택한 축에 따라 회전 변환 적용
+            if (rotationAxis == 'x') {
+                // x축 기준 회전 (y, z 좌표만 변환)
+                rotatedY = cosTheta * y - sinTheta * rotatedZ;
+                rotatedZ = sinTheta * y + cosTheta * rotatedZ;
+                rotatedX = x; // x 좌표는 그대로 유지
+            }
+            else if (rotationAxis == 'y') {
+                // y축 기준 회전 (x, z 좌표만 변환)
+                rotatedX = cosTheta * x + sinTheta * rotatedZ;
+                rotatedZ = -sinTheta * x + cosTheta * rotatedZ;
+                rotatedY = y; // y 좌표는 그대로 유지
+            }
+            else if (rotationAxis == 'z') {
+                // z축 기준 회전 (x, y 좌표만 변환)
+                rotatedX = cosTheta * x - sinTheta * y;
+                rotatedY = sinTheta * x + cosTheta * y;
+                rotatedZ = 0.0f; // z 좌표는 그대로 유지
+            }
 
-            meshVertices.push_back({ rotatedX, y, rotatedZ });
+            // 생성된 정점을 메쉬에 추가
+            meshVertices.push_back({ rotatedX, rotatedY, rotatedZ });
         }
     }
 
     isMeshGenerated = true;
     std::cout << "SOR 메쉬 생성 완료. 총 정점 수: " << meshVertices.size() << "\n";
+}
+
+// 주어진 축을 기준으로 점들을 회전
+void rotatePoints(char axis) {
+    float angleRadians = (2.0f * PI) / SOR_SEGMENTS; // 360도를 SOR_SEGMENTS로 나눈 각도
+    float cosTheta = cos(angleRadians);
+    float sinTheta = sin(angleRadians);
+
+    for (size_t i = 0; i < points.size(); i += 2) {
+        float x = points[i];
+        float y = points[i + 1];
+        float rotatedX = x, rotatedY = y, rotatedZ = 0.0f;
+
+        if (axis == 'x') {
+            // x축 기준 회전 (y, z 좌표만 변환)
+            rotatedY = cosTheta * y - sinTheta * rotatedZ;
+            rotatedZ = sinTheta * y + cosTheta * rotatedZ;
+        }
+        else if (axis == 'y') {
+            // y축 기준 회전 (x, z 좌표만 변환)
+            rotatedX = cosTheta * x + sinTheta * rotatedZ;
+            rotatedZ = -sinTheta * x + cosTheta * rotatedZ;
+        }
+        else if (axis == 'z') {
+            // z축 기준 회전 (x, y 좌표만 변환)
+            rotatedX = cosTheta * x - sinTheta * y;
+            rotatedY = sinTheta * x + cosTheta * y;
+        }
+
+        // 점 갱신 (현재 점 저장 방식은 x, y만 포함됨 -> z는 무시)
+        points[i] = rotatedX;
+        points[i + 1] = rotatedY;
+    }
+}
+
+// 모델과 점 초기화 함수
+void resetModel() {
+    points.clear();         // 입력된 점 초기화
+    meshVertices.clear();   // 메쉬 정점 초기화
+    isMeshGenerated = false; // 메쉬 생성 상태 초기화
+    wireframeMode = true;   // 기본 와이어프레임 모드 활성화
+    std::cout << "모델 초기화 완료. 새로운 점을 입력하세요.\n";
+    glutPostRedisplay();    // 화면 갱신
 }
 
 // SOR 메쉬 렌더링
@@ -97,7 +196,7 @@ void drawMesh() {
 
     // 와이어프레임 모드로 메쉬 그리기
     if (wireframeMode) {
-        glColor3f(0.0, 0.5, 1.0); // 파란색
+        glColor3f(1.0, 1.0, 0.0); // 파란색
         glBegin(GL_LINES);        // 와이어프레임 모드
 
         size_t numPoints = points.size() / 2; // 점의 개수 (x, y 쌍으로 저장되어 있음)
@@ -135,56 +234,62 @@ void drawMesh() {
     }
 }
 
-// 메쉬를 파일로 저장하는 함수
-void saveMeshToFile(const std::string& filename) {
-    std::ofstream outFile(filename);
+// 메쉬를 OBJ 파일로 저장하는 함수
+void saveMeshToOBJ(const std::string& filename) {
+    std::string Path = "SORdata/" + filename; // 저장 경로를 D:/Meshes/로 설정
+    std::ofstream outFile(Path);
     if (!outFile) {
-        std::cerr << "파일을 열 수 없습니다: " << filename << std::endl;
+        std::cerr << "파일을 열 수 없습니다: " << Path << std::endl;
         return;
     }
 
+    // OBJ 헤더
+    outFile << "# SOR Mesh exported as OBJ format\n";
+
     // 정점 정보 저장
-    outFile << "VERTEX_COUNT = " << meshVertices.size() << "\n";  // 정점 개수 저장
     for (const auto& vertex : meshVertices) {
-        outFile << vertex[0] << " " << vertex[1] << " " << vertex[2] << "\n";
+        outFile << "v " << vertex[0] << " " << vertex[1] << " " << vertex[2] << "\n";
     }
 
-    // 폴리곤 개수 계산 (삼각형 정의)
-    int polygonCount = 0;
+    // 폴리곤(face) 정보 저장
+    size_t numPoints = points.size() / 2; // 입력 점 개수
     for (int i = 0; i < SOR_SEGMENTS; ++i) {
-        for (size_t j = 0; j < points.size() / 2 - 1; ++j) {
-            polygonCount += 2;  // 각 세그먼트마다 두 개의 폴리곤이 생성됨
-        }
-    }
+        int nextSegment = (i + 1) % SOR_SEGMENTS;
 
-    // 폴리곤 개수 저장 (루프가 끝난 후, 폴리곤 개수를 계산한 후 저장)
-    outFile << "POLYGON_COUNT = " << polygonCount << "\n";
-
-    // 폴리곤 정보 저장 (삼각형 정의)
-    for (int i = 0; i < SOR_SEGMENTS; ++i) {
-        for (size_t j = 0; j < points.size() / 2 - 1; ++j) {
-            int idx1 = i * (points.size() / 2) + j;
+        for (size_t j = 0; j < numPoints - 1; ++j) {
+            int idx1 = i * numPoints + j + 1; // OBJ 인덱스는 1부터 시작
             int idx2 = idx1 + 1;
-            int idx3 = ((i + 1) % SOR_SEGMENTS) * (points.size() / 2) + j;
+            int idx3 = nextSegment * numPoints + j + 1;
             int idx4 = idx3 + 1;
 
-            // 두 개의 삼각형을 폴리곤으로 저장
-            outFile << idx1 << " " << idx2 << " " << idx3 << "\n";
-            outFile << idx2 << " " << idx4 << " " << idx3 << "\n";
+            outFile << "f " << idx1 << " " << idx2 << " " << idx3 << "\n";
+            outFile << "f " << idx2 << " " << idx4 << " " << idx3 << "\n";
         }
     }
 
     outFile.close();
+    std::cout << "메쉬가 " << Path << "에 저장되었습니다.\n";
 }
 
 // 화면 갱신
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    drawXAxis(); // x축 그리기
     drawYAxis(); // y축 그리기
+    drawZAxis(); // z축 그리기
     drawPointsOnly(); // 점들만 표시
-
     drawMesh();
-
+    // 화면 왼쪽 위에 키보드 입력 도움말 표시
+    glPushMatrix();
+    glLoadIdentity();    // 모델뷰 행렬 초기화
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(-1.0, 1.0, -1.0, 1.0); // 2D 평면 설정
+    displayKeyboardHelp();           // 키보드 입력 도움말 출력
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
     glutSwapBuffers();
 }
 
@@ -202,11 +307,15 @@ void mouseFunc(int button, int state, int x, int y) {
     }
 }
 
-// 키보드 이벤트
+// 키보드 이벤트 처리
 void keyboardFunc(unsigned char key, int x, int y) {
-    if (key == '\r' || key == '\n') {  // 엔터키가 눌리면
+    if (key == '\r' || key == '\n') {  // Enter 키가 눌리면
         generateSOR(); // SOR 메쉬 생성
         glutPostRedisplay();
+    }
+    else if (key == 'x' || key == 'y' || key == 'z') {
+        rotationAxis = key; // 회전 축 변경
+        std::cout << "현재 회전 축: " << rotationAxis << "축\n";
     }
     else if (key == 'w') {
         wireframeMode = !wireframeMode; // 와이어프레임 <-> 점 모드 전환
@@ -214,15 +323,25 @@ void keyboardFunc(unsigned char key, int x, int y) {
     }
     else if (key == 's') {  // 's' 키를 눌러서 메쉬를 저장
         if (isMeshGenerated) {
-            std::cout << "메쉬를 저장하는 중...\n";
-            saveMeshToFile("mesh.dat");
-            std::cout << "메쉬가 mesh.dat로 저장되었습니다.\n";
+            std::cout << "저장할 이름을 입력하시오: ";
+            std::string filename;
+            std::cin >> filename;
+            filename += ".obj";
+            saveMeshToOBJ(filename);
         }
+    }
+    else if (key == 'q') { // 'q' 키를 눌러 초기화
+        resetModel(); // 모델 초기화
+    }
+    else if (key == 'g') { // 'g' 키를 눌러 .exe 파일 실행
+        std::cout << "Maze.exe";
+        system("Maze.exe");
     }
     else if (key == 27) { // ESC 키로 종료
         exit(0);
     }
 }
+
 
 // 사용자 입력을 통해 SOR 회전 분할 각도 설정
 void setSORSegmentsFromUserInput() {
@@ -247,7 +366,7 @@ void setSORSegmentsFromUserInput() {
 // OpenGL 초기화
 void init() {
     setSORSegmentsFromUserInput(); // 사용자 입력으로 SOR 분할 수 설정
-    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClearColor(0.5, 0.5, 0.5, 1.0);
     glEnable(GL_DEPTH_TEST); // 깊이 테스트 활성화
 }
 
