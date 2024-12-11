@@ -1,36 +1,46 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <GL/glut.h>
 #include "Collision_Detection.h"
 #include "Mouse_And_Keyboard_Input.h"
-#include "Draw_Maze.h"
+#include "Draw_MazeAndSOR.h"
 
 void initOpenGL() {
-    glEnable(GL_DEPTH_TEST); // ê¹Šì´ í…ŒìŠ¤íŠ¸ í™œì„±í™”
+    glClearColor(0.407f, 0.705f, 0.941f, 1);
+    glEnable(GL_DEPTH_TEST); // ±íÀÌ Å×½ºÆ® È°¼ºÈ­
     glEnable(GL_TEXTURE_2D);
-    glDisable(GL_CULL_FACE);  // ë°±í˜ì´ìŠ¤ ì»¬ë§ ë¹„í™œì„±í™”
-
-    wallTexture = loadTexture("WallTexture01.jpg");  // ì‚¬ìš©í•  í…ìŠ¤ì²˜ íŒŒì¼ ê²½ë¡œ
-    floorTexture = loadTexture("WallTexture01.jpg");  // ì‚¬ìš©í•  í…ìŠ¤ì²˜ íŒŒì¼ ê²½ë¡œ
     glMatrixMode(GL_PROJECTION);
-    gluPerspective(45.0, 1.0, 0.1, 100.0);  // ì´ˆê¸° ë¹„ìœ¨ì„ 1.0ìœ¼ë¡œ ì„¤ì •
     glMatrixMode(GL_MODELVIEW);
+    gluPerspective(45.0, 1.0, 0.1, 100.0);  // ÃÊ±â ºñÀ²À» 1.0À¸·Î ¼³Á¤
 
-    setupLighting(); // ì¡°ëª… ì„¤ì • í˜¸ì¶œ
+    wallTexture = loadTexture("Imagedata\\Walltexture.bmp");  // »ç¿ëÇÒ ÅØ½ºÃ³ ÆÄÀÏ °æ·Î
+    floorTexture = loadTexture("Imagedata\\Floortexture.bmp");
+    skyTexture = loadTexture("Imagedata\\Skytexture.jpg");
+    skyTopTexture = loadTexture("Imagedata\\Skytoptexture.jpg");
+    // ¸ğµ¨(maze[i][j] == 2 ¿ë)
+    LoadOBJ("SORdata\\mesh.obj", gVertices2, gNormals2, gFaces2, gNumVertices2, gNumFaces2);
+    // ¸ğµ¨(maze[i][j] == 3 ¿ë)
+    LoadOBJ("SORdata\\mesh2.obj", gVertices3, gNormals3, gFaces3, gNumVertices3, gNumFaces3);
+    // ¸ğµ¨(maze[i][j] == 4 ¿ë)
+    LoadOBJ("SORdata\\mesh3.obj", gVertices4, gNormals4, gFaces4, gNumVertices4, gNumFaces4);
+    // ¸ğµ¨(maze[i][j] == 5 ¿ë)
+    LoadOBJ("SORdata\\mesh4.obj", gVertices5, gNormals5, gFaces5, gNumVertices5, gNumFaces5);
 
-    // ë¯¸ë¡œ ë²½ ì½œë¼ì´ë” ìƒì„±
+    // ¹Ì·Î º® Äİ¶óÀÌ´õ »ı¼º
     createColliders(maze, wallSize);
 
-    // ë§ˆìš°ìŠ¤ë¥¼ í™”ë©´ ì¤‘ì•™ìœ¼ë¡œ ì´ë™
+    // ¸¶¿ì½º¸¦ È­¸é Áß¾ÓÀ¸·Î ÀÌµ¿
     glutWarpPointer(centerX, centerY);
 }
 
+// À©µµ¿ì Å©±â º¯°æ ½Ã È£ÃâµÇ´Â ÇÔ¼ö
 void reshape(int width, int height) {
-    // í™”ë©´ì˜ ë¹„ìœ¨ì´ ë³€í•˜ì§€ ì•Šë„ë¡ ì„¤ì •
-    glViewport(0, 0, width, height);  // ìœˆë„ìš° í¬ê¸° ì„¤ì •
+    // È­¸éÀÇ ºñÀ²ÀÌ º¯ÇÏÁö ¾Êµµ·Ï ¼³Á¤
+    glViewport(0, 0, width, height);  // À©µµ¿ì Å©±â ¼³Á¤
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    // ìƒˆë¡œìš´ ë¹„ìœ¨ì— ë§ëŠ” íˆ¬ì˜ ì„¤ì •
+    // »õ·Î¿î ºñÀ²¿¡ ¸Â´Â Åõ¿µ ¼³Á¤
     GLfloat aspect = (GLfloat)width / (GLfloat)height;
     gluPerspective(45.0, aspect, 0.1, 100.0);
 
@@ -41,7 +51,7 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(windowWidth, windowHeight);
-    glutCreateWindow("3D Maze with Collision Detection");
+    glutCreateWindow("3D Maze Experiment");
 
     initOpenGL();
 
@@ -49,9 +59,9 @@ int main(int argc, char** argv) {
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
     glutKeyboardUpFunc(keyboardUp);
-    glutPassiveMotionFunc(mouseMotion); // ë§ˆìš°ìŠ¤ ì›€ì§ì„ ì²˜ë¦¬ ë“±ë¡
-    glutIdleFunc(moveCameraAndPlayer);  // ë¶€ë“œëŸ¬ìš´ ì´ë™ ì²˜ë¦¬
-    glutReshapeFunc(reshape);  // ìœˆë„ìš° í¬ê¸° ì¡°ì • ì‹œ í˜¸ì¶œë  í•¨ìˆ˜ ë“±ë¡
+    glutPassiveMotionFunc(mouseMotion); // ¸¶¿ì½º ¿òÁ÷ÀÓ Ã³¸® µî·Ï
+    glutIdleFunc(moveCameraAndPlayer);  // ºÎµå·¯¿î ÀÌµ¿ Ã³¸®
+    glutReshapeFunc(reshape);  // À©µµ¿ì Å©±â Á¶Á¤ ½Ã È£ÃâµÉ ÇÔ¼ö µî·Ï
 
     glutMainLoop();
     return 0;

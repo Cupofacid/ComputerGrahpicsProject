@@ -2,38 +2,44 @@
 #include <GL/glut.h>
 #include <vector>
 #include <cmath>
-#include "Draw_Maze.h"
+#include "Draw_MazeAndSOR.h"
 
-bool keyStates[256] = { false }; // í‚¤ ìƒíƒœ ì¶”ì 
+bool keyStates[256] = { false }; // Å° »óÅÂ ÃßÀû
 
-// í‚¤ë³´ë“œ ëˆŒë¦¼ ì²˜ë¦¬
+// Å°º¸µå ´­¸² Ã³¸®
 void keyboard(unsigned char key, int x, int y) {
-    if (key == 27) { // ESC í‚¤ë¡œ ì¢…ë£Œ
+    if (key == 27) { // ESC Å°·Î Á¾·á
         exit(0);
     }
-    keyStates[key] = true; // í‚¤ ëˆŒë¦¼ ìƒíƒœ ì €ì¥
+    else if (currentGameState == GAME_DESCRIPTION) {
+        if (key == 13) { // Enter key (ASCII 13)
+            currentGameState = GAME_RUNNING; // »óÅÂ ÀüÈ¯
+        }
+    }
+    keyStates[key] = true; // Å° ´­¸² »óÅÂ ÀúÀå
+
 }
 
-// í‚¤ë³´ë“œ ë–¼ê¸° ì²˜ë¦¬
+// Å°º¸µå ¶¼±â Ã³¸®
 void keyboardUp(unsigned char key, int x, int y) {
-    keyStates[key] = false; // í‚¤ ë–¼ê¸° ìƒíƒœ ì €ì¥
+    keyStates[key] = false; // Å° ¶¼±â »óÅÂ ÀúÀå
 }
 
-// ë§ˆìš°ìŠ¤ ì›€ì§ì„ ì²˜ë¦¬
+// ¸¶¿ì½º ¿òÁ÷ÀÓ Ã³¸®
 void mouseMotion(int x, int y) {
-    // ì¤‘ì•™ì—ì„œì˜ ì´ë™ëŸ‰ ê³„ì‚°
+    // Áß¾Ó¿¡¼­ÀÇ ÀÌµ¿·® °è»ê
     int dx = x - centerX;
     int dy = y - centerY;
 
-    // ì¹´ë©”ë¼ íšŒì „ ì—…ë°ì´íŠ¸
-    const float sensitivity = 0.002f; // ë¯¼ê°ë„
+    // Ä«¸Ş¶ó È¸Àü ¾÷µ¥ÀÌÆ®
+    const float sensitivity = 0.002f; // ¹Î°¨µµ
     yaw += dx * sensitivity;
     pitch -= dy * sensitivity;
 
-    // pitch ì œí•œ (ìƒí•˜ íšŒì „ ì œí•œ)
-    if (pitch < -1.5f) pitch = -1.5f; // ì•½ -85ë„
+    // pitch Á¦ÇÑ (»óÇÏ È¸Àü Á¦ÇÑ)
+    if (pitch < -1.5f) pitch = -1.5f; // ¾à -85µµ
 
-    // ë§ˆìš°ìŠ¤ë¥¼ ë‹¤ì‹œ í™”ë©´ ì¤‘ì•™ìœ¼ë¡œ ì´ë™
+    // ¸¶¿ì½º¸¦ ´Ù½Ã È­¸é Áß¾ÓÀ¸·Î ÀÌµ¿
     glutWarpPointer(centerX, centerY);
 
     glutPostRedisplay();
